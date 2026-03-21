@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  username    String        @unique @db.VarChar(150)
+  email       String        @unique @db.VarChar(150)
+  password    String        @db.VarChar(255)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  isAdmin     Boolean       @default(false) @map("is_admin")
+  thesisStage Int           @default(0) @map("thesis_stage")
+  sessions    ChatSession[]
+  documents   Document[]
+  activity    ActivityLog[]
+
+  @@map("user")
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  action    String   @db.VarChar(50)
+  details   String?  @db.VarChar(255)
+  timestamp DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@map("activity_log")
+}
+
+model ChatSession {
+  id        Int               @id @default(autoincrement())
+  userId    Int               @map("user_id")
+  title     String            @default("New Conversation") @db.VarChar(200)
+  createdAt DateTime          @default(now()) @map("created_at")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  documents SessionDocument[]
+
+  @@index([userId])
+  @@map("chat_session")
+}
+
+model ChatMessage {
+  id        Int         @id @default(autoincrement())
+  sessionId Int         @map("session_id")
+  role      String      @db.VarChar(50)
+  content   String
+  createdAt DateTime    @default(now()) @map("created_at")
+  citations String?
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_message")
+}
+
+model Document {
+  id        Int               @id @default(autoincrement())
+  userId    Int               @map("user_id")
+  filename  String            @db.VarChar(255)
+  fileUrl   String?           @map("file_url") @db.VarChar(512)
+  uploadedAt DateTime         @default(now()) @map("uploaded_at")
+  chunkCount Int              @default(0) @map("chunk_count")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions  SessionDocument[]
+
+  @@index([userId])
+  @@map("document")
+}
+
+model SessionDocument {
+  sessionId  Int
+  documentId Int
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, documentId])
+  @@map("session_documents")
+}

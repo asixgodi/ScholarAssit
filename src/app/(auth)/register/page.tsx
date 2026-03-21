@@ -1,0 +1,35 @@
+"use client";
+
+import Link from "next/link";
+import { RegisterForm } from "@/components/auth/register-form";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLocale } from "@/hooks/use-locale";
+
+export default function RegisterPage() {
+    const { t } = useLocale();
+
+    return (
+        <main className="grid min-h-screen grid-cols-1 bg-[radial-gradient(circle_at_top,_#bae6fd_0,_#f8fafc_35%,_#fef3c7_100%)] lg:grid-cols-2">
+            <section className="hidden flex-col justify-between p-10 lg:flex">
+                <div className="flex items-center justify-between gap-4">
+                    <h1 className="text-4xl font-black text-slate-900">ScholarSync</h1>
+                    <LanguageToggle />
+                </div>
+                <p className="max-w-md text-lg text-slate-700">
+                    {t.sideRegisterDesc}
+                </p>
+            </section>
+            <section className="flex items-center justify-center p-6">
+                <div className="w-full max-w-md space-y-4">
+                    <div className="flex justify-end lg:hidden">
+                        <LanguageToggle />
+                    </div>
+                    <RegisterForm />
+                    <p className="text-center text-sm text-slate-600">
+                        {t.hasAccount} <Link className="font-semibold underline" href="/login">{t.login}</Link>
+                    </p>
+                </div>
+            </section>
+        </main>
+    );
+}
