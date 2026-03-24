@@ -10,9 +10,9 @@ export default function LoginPage() {
 
     return (
         <main className="grid min-h-screen grid-cols-1 bg-[radial-gradient(circle_at_top,_#fcd34d_0,_#fff7ed_35%,_#ecfeff_100%)] lg:grid-cols-2">
-            <section className="hidden flex-col justify-between p-10 lg:flex">
+            <section className="hidden flex-col justify-between p-10 lg:flex w-full">
                 <div className="flex items-center justify-between gap-4">
-                    <h1 className="text-4xl font-black text-slate-900">ScholarSync</h1>
+                    <h1 className="text-4xl font-black text-slate-900">ScholarAssit</h1>
                     <LanguageToggle />
                 </div>
                 <p className="max-w-md text-lg text-slate-700">

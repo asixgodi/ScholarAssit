@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+// 导入auth选项
 import { authOptions } from "@/lib/auth";
 
 const handler = NextAuth(authOptions);

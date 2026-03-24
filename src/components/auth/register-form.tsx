@@ -37,11 +37,16 @@ export function RegisterForm() {
             return;
         }
 
-        await signIn("credentials", {
+        const signInResult = await signIn("credentials", {
             email,
             password,
             redirect: false,
         });
+
+        if (signInResult?.error) {
+            setError(t.loginError);
+            return;
+        }
 
         router.push("/dashboard");
         router.refresh();

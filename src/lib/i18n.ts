@@ -1,16 +1,19 @@
+// 作用于浏览器的
 export const LOCALE_STORAGE_KEY = "scholarsync-locale";
+// 用于服务端的
 export const LOCALE_COOKIE_KEY = "scholarsync-locale";
 
 export const dictionaries = {
     zh: {
-        appName: "ScholarSync",
+        appName: "ScholarAssit",
         subtitle: "基于你文档的 AI 论文助手",
         navDashboard: "仪表盘",
         navChat: "聊天",
         navAdmin: "管理",
+        navLogout: "退出登录",
         navLogin: "登录",
         navRegister: "注册",
-        heroBadge: "ScholarSync AI 研究工作台",
+        heroBadge: "ScholarAssit AI 研究工作台",
         heroTitle: "用可溯源的 RAG，更快完成论文写作。",
         heroDesc: "上传 PDF、管理导师沟通会话、获得带引用的结构化回答。整个流程专为毕业阶段学生设计。",
         startNow: "立即开始",
@@ -27,8 +30,8 @@ export const dictionaries = {
         faqA2: "可以。Credentials 登录使用 bcryptjs，兼容 Flask-Bcrypt 的 $2b$ 哈希。",
         faqQ3: "测试前必须先部署吗？",
         faqA3: "不需要。只要本地环境变量配置完整，就能在本地跑通全流程。",
-        loginTitle: "登录 ScholarSync",
-        registerTitle: "创建 ScholarSync 账号",
+        loginTitle: "登录 ScholarAssit",
+        registerTitle: "创建 ScholarAssit 账号",
         username: "用户名",
         email: "邮箱",
         password: "密码",
@@ -74,14 +77,15 @@ export const dictionaries = {
         switchToEn: "English",
     },
     en: {
-        appName: "ScholarSync",
+        appName: "ScholarAssit",
         subtitle: "AI thesis copilot grounded on your documents",
         navDashboard: "Dashboard",
         navChat: "Chat",
         navAdmin: "Admin",
+        navLogout: "Sign out",
         navLogin: "Login",
         navRegister: "Register",
-        heroBadge: "ScholarSync AI Research Studio",
+        heroBadge: "ScholarAssit AI Research Studio",
         heroTitle: "Write your thesis faster with accountable RAG.",
         heroDesc: "Upload PDFs, manage advising sessions, and get structured answers with citations. Built for final-year students who need academic-quality output.",
         startNow: "Get Started",
@@ -98,8 +102,8 @@ export const dictionaries = {
         faqA2: "Yes. Credentials auth uses bcryptjs and is compatible with Flask-Bcrypt $2b$ hashes.",
         faqQ3: "Do I need deployment before testing?",
         faqA3: "No. You can test locally as long as required env variables are configured.",
-        loginTitle: "Sign in to ScholarSync",
-        registerTitle: "Create a ScholarSync account",
+        loginTitle: "Sign in to ScholarAssit",
+        registerTitle: "Create a ScholarAssit account",
         username: "Username",
         email: "Email",
         password: "Password",
@@ -144,8 +148,9 @@ export const dictionaries = {
         switchToZh: "中文",
         switchToEn: "English",
     },
-} as const;
+} as const; // as const 断言让 TypeScript 将对象属性推断为字面量类型，而不是更宽泛的 string 类型
 
+// typeof获取类型  keyof获取这个对象的key组成的联合类型
 export type Locale = keyof typeof dictionaries;
 export type Dictionary = (typeof dictionaries)[Locale];
 

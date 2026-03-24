@@ -28,14 +28,14 @@ export function LoginForm() {
             redirect: false,
         });
 
-        setLoading(false);
-
         if (result?.error) {
             setError(t.loginError);
+            setLoading(false);
             return;
         }
 
         router.push("/dashboard");
+        setLoading(false);
         router.refresh();
     };
 

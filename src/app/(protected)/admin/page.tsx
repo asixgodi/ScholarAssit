@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/current-user";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminStats } from "@/components/admin/admin-stats";
 import { AdminOverview } from "@/components/admin/admin-overview";
 
 function getLast7Days() {
@@ -42,11 +42,7 @@ export default async function AdminPage() {
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card><CardHeader><CardTitle>用户总数</CardTitle></CardHeader><CardContent className="text-3xl font-black">{users}</CardContent></Card>
-                <Card><CardHeader><CardTitle>文档总数</CardTitle></CardHeader><CardContent className="text-3xl font-black">{docs}</CardContent></Card>
-                <Card><CardHeader><CardTitle>会话总数</CardTitle></CardHeader><CardContent className="text-3xl font-black">{sessions}</CardContent></Card>
-            </div>
+            <AdminStats users={users} docs={docs} sessions={sessions} />
             <AdminOverview labels={labels} values={dates.map((d) => valueMap.get(d) || 0)} />
         </div>
     );

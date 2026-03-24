@@ -3,8 +3,8 @@ import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ScholarSync",
-  description: "基于 RAG 的 AI 论文助手",
+  title: "ScholarAssit",
+  description: "你的 AI 论文助手",
 };
 
 export default function RootLayout({

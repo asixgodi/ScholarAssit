@@ -35,6 +35,7 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
+        // JWT回调，在这里我们把用户信息存储在token中，存储在浏览器的 Cookie 里
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
@@ -43,6 +44,7 @@ export const authOptions: NextAuthOptions = {
             }
             return token;
         },
+        // 给前端准备的session对象，包含了用户信息
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = String(token.id ?? "");
@@ -55,5 +57,6 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: "/login",
     },
+    // 使用环境变量中的SECRET来加密JWT
     secret: process.env.NEXTAUTH_SECRET,
 };

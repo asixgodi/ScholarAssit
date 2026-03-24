@@ -1,7 +1,10 @@
 import crypto from "crypto";
-import { PDFParse } from "pdf-parse";
+import { createRequire } from "module";
 import { embedText } from "@/lib/embeddings";
 import { upsertChunks } from "@/lib/astra";
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Promise<{ text?: string }>;
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
@@ -39,9 +42,7 @@ export async function ingestPdf(params: {
     userId: string;
     filename: string;
 }): Promise<number> {
-    const parser = new PDFParse({ data: params.buffer });
-    const parsed = await parser.getText();
-    await parser.destroy();
+    const parsed = await pdfParse(params.buffer);
     const chunks = splitTextRecursively(parsed.text || "");
 
     if (!chunks.length) return 0;

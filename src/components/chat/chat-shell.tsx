@@ -37,6 +37,8 @@ export function ChatShell({ initialSessions, initialDocuments }: Props) {
     const [flashcards, setFlashcards] = useState<Array<{ question: string; answer: string }>>([]);
     const [audioSummary, setAudioSummary] = useState("");
     const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState("");
+    const [uploadWarning, setUploadWarning] = useState("");
     const { messages, setMessages, sendMessage, isStreaming } = useChatStream(activeSessionId);
 
     useEffect(() => {
@@ -94,12 +96,31 @@ export function ChatShell({ initialSessions, initialDocuments }: Props) {
 
     const uploadDocument = async (file: File) => {
         setUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await fetch("/api/documents", { method: "POST", body: formData });
-        setUploading(false);
-        if (!response.ok) return;
-        await refreshDocuments();
+        setUploadError("");
+        setUploadWarning("");
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            const response = await fetch("/api/documents", { method: "POST", body: formData });
+            const body = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                const errorMessage = typeof body?.error === "string" ? body.error : "Upload failed";
+                setUploadError(errorMessage);
+                return;
+            }
+
+            if (typeof body?.warning === "string" && body.warning) {
+                setUploadWarning(body.warning);
+            }
+
+            await refreshDocuments();
+        } catch {
+            setUploadError("Upload failed");
+        } finally {
+            setUploading(false);
+        }
     };
 
     const renameDocument = async (docId: number, oldName: string) => {
@@ -208,6 +229,8 @@ export function ChatShell({ initialSessions, initialDocuments }: Props) {
                                 e.currentTarget.value = "";
                             }}
                         />
+                        {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
+                        {uploadWarning ? <p className="text-xs text-amber-600">{uploadWarning}</p> : null}
                         <div className="max-h-48 space-y-2 overflow-auto">
                             {documents.map((doc) => (
                                 <div key={doc.id} className="rounded border bg-white p-2 text-xs">
