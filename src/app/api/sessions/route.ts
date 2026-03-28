@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         const session = await prisma.chatSession.create({
             data: {
                 userId: user.id,
-                title: title || "New Research",
+                title: title || "Untitled Research Chat",
             },
         });
 

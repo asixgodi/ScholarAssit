@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/current-user";
@@ -61,13 +62,32 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing file" }, { status: 400 });
         }
 
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const fileHash = crypto.createHash("sha256").update(buffer).digest("hex");
+
+        const existingDoc = await withPoolRetry(() =>
+            prisma.document.findFirst({
+                where: {
+                    userId: user.id,
+                    fileHash,
+                },
+                orderBy: { uploadedAt: "desc" },
+            }),
+        );
+
+        if (existingDoc) {
+            return NextResponse.json({
+                ...existingDoc,
+                duplicated: true,
+                warning: "This file has already been uploaded. Skipped re-indexing.",
+            });
+        }
+
         const [{ ingestPdf }, { uploadPdfToBlob }] = await Promise.all([
             import("@/lib/ingest"),
             import("@/lib/blob"),
         ]);
-
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
 
         let chunkCount = 0;
         let warning: string | null = null;
@@ -101,6 +121,7 @@ export async function POST(req: Request) {
                     data: {
                         userId: user.id,
                         filename: file.name,
+                        fileHash,
                         chunkCount,
                         fileUrl,
                     },

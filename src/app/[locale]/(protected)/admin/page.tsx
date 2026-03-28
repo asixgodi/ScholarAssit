@@ -16,9 +16,10 @@ function getLast7Days() {
     return { labels, dates };
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     const user = await requireUser();
-    if (!user.isAdmin) redirect("/dashboard");
+    if (!user.isAdmin) redirect(`/${locale}/dashboard`);
 
     const [users, docs, sessions, logs] = await Promise.all([
         prisma.user.count(),

@@ -1,84 +1,46 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
-import {
-    getDictionary,
-    isLocale,
-    LOCALE_COOKIE_KEY,
-    LOCALE_STORAGE_KEY,
-    Locale,
-} from "@/lib/i18n";
+import { useLocale as useNextIntlLocale } from "next-intl";
+import { usePathname as useRawPathname } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { Locale, isLocale } from "@/lib/i18n";
 
 const DEFAULT_LOCALE: Locale = "zh";
-type Listener = () => void;
+const localePrefixMatcher = /^\/(zh|en)(?=\/|$)/;
 
-const listeners = new Set<Listener>();
-let currentLocale: Locale = DEFAULT_LOCALE;
-let isInitialized = false;
-
-function notifyListeners() {
-    listeners.forEach((listener) => listener());
-}
-
-function readInitialLocale(): Locale {
-    if (typeof window === "undefined") return DEFAULT_LOCALE;
-
-    const fromStorage = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (isLocale(fromStorage)) return fromStorage;
-
-    const navLang = navigator.language.toLowerCase();
-    return navLang.startsWith("zh") ? "zh" : "en";
-}
-
-function persistLocale(locale: Locale) {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
-}
-
-function ensureInitialized() {
-    if (isInitialized || typeof window === "undefined") return;
-
-    isInitialized = true;
-    currentLocale = readInitialLocale();
-    persistLocale(currentLocale);
-
-    window.addEventListener("storage", (event) => {
-        if (event.key !== LOCALE_STORAGE_KEY || !isLocale(event.newValue)) return;
-        if (event.newValue === currentLocale) return;
-
-        currentLocale = event.newValue;
-        notifyListeners();
-    });
-}
-
-function subscribe(listener: Listener) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-}
-
-function getSnapshot() {
-    ensureInitialized();
-    return currentLocale;
-}
-
-function getServerSnapshot() {
-    return DEFAULT_LOCALE;
-}
-
-function setLocale(nextLocale: Locale) {
-    ensureInitialized();
-    if (nextLocale === currentLocale) return;
-
-    currentLocale = nextLocale;
-    persistLocale(nextLocale);
-    notifyListeners();
+// 移出 URL 中的语言前缀，得到不带语言部分的路径
+function stripLocalePrefix(path: string): string {
+    return path.replace(localePrefixMatcher, "") || "/";
 }
 
 export function useLocale() {
-    const locale = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    const router = useRouter();
+    // 原生的 pathname (例如 "/zh/chat")
+    const pathname = useRawPathname();
+    const localeFromIntl = useNextIntlLocale();
+    // 提取出 URL 中的语言部分 (例如 "zh")
+    const localeFromPath = pathname?.match(localePrefixMatcher)?.[1];
+    const locale = isLocale(localeFromPath)
+        ? localeFromPath
+        : isLocale(localeFromIntl)
+            ? localeFromIntl
+            : DEFAULT_LOCALE;
 
-    const t = useMemo(() => getDictionary(locale), [locale]);
+    // 将一个不带语言前缀的路径转换成带有目标语言前缀的路径，默认使用当前语言
+    const toLocalePath = (path: string, targetLocale: Locale = locale) => {
+        const normalized = path.startsWith("/") ? path : `/${path}`;
+        const stripped = stripLocalePrefix(normalized);
+        return `/${targetLocale}${stripped === "/" ? "" : stripped}`;
+    };
 
-    return { locale, setLocale, t };
+    const setLocale = (nextLocale: Locale) => {
+        if (nextLocale === locale) return;
+
+        const currentPath = pathname || "/";
+        const normalizedPath = stripLocalePrefix(currentPath);
+        // 使用 i18n 路由器的 replace 方法，会自动把 "/chat" 加上新前缀 "{ locale: 'en' }" 变成 "/en/chat"
+        router.replace(normalizedPath, { locale: nextLocale });
+    };
+
+    return { locale, setLocale, toLocalePath };
 }

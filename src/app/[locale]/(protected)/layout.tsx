@@ -3,9 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ProtectedNav } from "@/components/protected/protected-nav";
 
-export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default async function ProtectedLayout({
+    children,
+    params,
+}: {
+    children: React.ReactNode;
+    params: Promise<{ locale: string }>;
+}) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) redirect("/login");
+    const { locale } = await params;
+
+    if (!session?.user) redirect(`/${locale}/login`);
 
     return (
         <div className="min-h-screen bg-slate-50">

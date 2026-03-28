@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/hooks/use-locale";
 
 export function LanguageToggle() {
-    const { locale, setLocale, t } = useLocale();
+    const t = useTranslations();
+    const { locale, setLocale } = useLocale();
 
     return (
         <div className="flex items-center gap-2">
@@ -14,7 +16,7 @@ export function LanguageToggle() {
                 size="sm"
                 onClick={() => setLocale("zh")}
             >
-                {t.switchToZh}
+                {t("switchToZh")}
             </Button>
             <Button
                 type="button"
@@ -22,7 +24,7 @@ export function LanguageToggle() {
                 size="sm"
                 onClick={() => setLocale("en")}
             >
-                {t.switchToEn}
+                {t("switchToEn")}
             </Button>
         </div>
     );

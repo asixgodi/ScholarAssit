@@ -1,9 +1,9 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { useLocale } from "@/hooks/use-locale";
 
 export function ModeToggle() {
     const { locale } = useLocale();

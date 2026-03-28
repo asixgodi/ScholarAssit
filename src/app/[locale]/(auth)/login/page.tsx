@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { LoginForm } from "@/components/auth/login-form";
 import { LanguageToggle } from "@/components/language-toggle";
-import { useLocale } from "@/hooks/use-locale";
+import { Link } from "@/i18n/navigation";
 
 export default function LoginPage() {
-    const { t } = useLocale();
+    const t = useTranslations();
 
     return (
         <main className="grid min-h-screen grid-cols-1 bg-[radial-gradient(circle_at_top,_#fcd34d_0,_#fff7ed_35%,_#ecfeff_100%)] lg:grid-cols-2">
@@ -15,9 +15,7 @@ export default function LoginPage() {
                     <h1 className="text-4xl font-black text-slate-900">ScholarAssit</h1>
                     <LanguageToggle />
                 </div>
-                <p className="max-w-md text-lg text-slate-700">
-                    {t.sideLoginDesc}
-                </p>
+                <p className="max-w-md text-lg text-slate-700">{t("sideLoginDesc")}</p>
             </section>
             <section className="flex items-center justify-center p-6">
                 <div className="w-full max-w-md space-y-4">
@@ -26,7 +24,10 @@ export default function LoginPage() {
                     </div>
                     <LoginForm />
                     <p className="text-center text-sm text-slate-600">
-                        {t.noAccount} <Link className="font-semibold underline" href="/register">{t.register}</Link>
+                        {t("noAccount")}{" "}
+                        <Link className="font-semibold underline" href="/register">
+                            {t("register")}
+                        </Link>
                     </p>
                 </div>
             </section>

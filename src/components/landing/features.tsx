@@ -1,25 +1,25 @@
 "use client";
 
 import { BookOpen, FileSearch, Sparkles } from "lucide-react";
-import { useLocale } from "@/hooks/use-locale";
+import { useTranslations } from "next-intl";
 
 export function Features() {
-    const { t } = useLocale();
+    const t = useTranslations();
     const items = [
         {
             icon: FileSearch,
-            title: t.feature1Title,
-            desc: t.feature1Desc,
+            title: t("feature1Title"),
+            desc: t("feature1Desc"),
         },
         {
             icon: Sparkles,
-            title: t.feature2Title,
-            desc: t.feature2Desc,
+            title: t("feature2Title"),
+            desc: t("feature2Desc"),
         },
         {
             icon: BookOpen,
-            title: t.feature3Title,
-            desc: t.feature3Desc,
+            title: t("feature3Title"),
+            desc: t("feature3Desc"),
         },
     ];
 

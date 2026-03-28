@@ -66,6 +66,7 @@ model Document {
   id        Int               @id @default(autoincrement())
   userId    Int               @map("user_id")
   filename  String            @db.VarChar(255)
+  fileHash  String?           @map("file_hash") @db.VarChar(64)
   fileUrl   String?           @map("file_url") @db.VarChar(512)
   uploadedAt DateTime         @default(now()) @map("uploaded_at")
   chunkCount Int              @default(0) @map("chunk_count")
@@ -73,6 +74,7 @@ model Document {
   sessions  SessionDocument[]
 
   @@index([userId])
+  @@unique([userId, fileHash])
   @@map("document")
 }
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useLocale } from "@/hooks/use-locale";
+import { useTranslations } from "next-intl";
 
 export function Faq() {
-    const { t } = useLocale();
+    const t = useTranslations();
     const faq = [
-        { q: t.faqQ1, a: t.faqA1 },
-        { q: t.faqQ2, a: t.faqA2 },
-        { q: t.faqQ3, a: t.faqA3 },
+        { q: t("faqQ1"), a: t("faqA1") },
+        { q: t("faqQ2"), a: t("faqA2") },
+        { q: t("faqQ3"), a: t("faqA3") },
     ];
 
     return (

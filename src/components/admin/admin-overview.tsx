@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
     CategoryScale,
     Chart as ChartJS,
@@ -12,7 +13,6 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLocale } from "@/hooks/use-locale";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -22,13 +22,13 @@ type Props = {
 };
 
 export function AdminOverview({ labels, values }: Props) {
-    const { t } = useLocale();
+    const t = useTranslations();
     const data = useMemo(
         () => ({
             labels,
             datasets: [
                 {
-                    label: t.activityLabel,
+                    label: t("activityLabel"),
                     data: values,
                     borderColor: "#0f172a",
                     backgroundColor: "rgba(15, 23, 42, 0.2)",
@@ -36,13 +36,13 @@ export function AdminOverview({ labels, values }: Props) {
                 },
             ],
         }),
-        [labels, t.activityLabel, values],
+        [labels, t, values],
     );
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>{t.activityTrend7d}</CardTitle>
+                <CardTitle>{t("activityTrend7d")}</CardTitle>
             </CardHeader>
             <CardContent>
                 <Line data={data} />

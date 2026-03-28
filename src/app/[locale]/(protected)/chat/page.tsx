@@ -27,30 +27,14 @@ async function withPoolRetry<T>(operation: () => Promise<T>): Promise<T> {
 export default async function ChatPage() {
     const user = await requireUser();
 
-    const [sessions, documents] = await withPoolRetry(() =>
-        prisma.$transaction([
-            prisma.chatSession.findMany({
-                where: { userId: user.id },
-                orderBy: { createdAt: "desc" },
-                select: { id: true, title: true },
-                take: 30,
-            }),
-            prisma.document.findMany({
-                where: { userId: user.id },
-                orderBy: { uploadedAt: "desc" },
-                select: { id: true, filename: true, uploadedAt: true },
-                take: 100,
-            }),
-        ]),
+    const sessions = await withPoolRetry(() =>
+        prisma.chatSession.findMany({
+            where: { userId: user.id },
+            orderBy: { createdAt: "desc" },
+            select: { id: true, title: true },
+            take: 30,
+        }),
     );
 
-    return (
-        <ChatShell
-            initialSessions={sessions}
-            initialDocuments={documents.map((d) => ({
-                ...d,
-                uploadedAt: d.uploadedAt.toISOString(),
-            }))}
-        />
-    );
+    return <ChatShell initialSessions={sessions} />;
 }
