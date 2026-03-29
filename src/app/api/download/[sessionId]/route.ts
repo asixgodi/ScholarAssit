@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: Params) {
 
         let markdown = `# Transkrip Bimbingan: ${session.title}\n\n`;
         for (const msg of session.messages) {
-            markdown += `**${msg.role === "user" ? "Mahasiswa" : "Dr. Sync"}**\n\n${msg.content}\n\n---\n\n`;
+            markdown += `**${msg.role === "user" ? "User" : "Dr. scholarAssit"}**\n\n${msg.content}\n\n---\n\n`;
         }
 
         return new Response(markdown, {

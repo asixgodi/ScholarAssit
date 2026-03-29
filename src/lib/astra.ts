@@ -175,6 +175,25 @@ export async function upsertChunks(chunks: ChunkInput[]): Promise<void> {
     }
 }
 
+export async function deleteChunksBySource(userId: number | string, filename: string): Promise<void> {
+    try {
+        const client = getClient();
+        const endpoint = normalize(process.env.ZILLIZ_ENDPOINT || process.env.MILVUS_ENDPOINT || process.env.MILVUS_ADDRESS);
+        const dbName = getDbName(endpoint);
+        await ensureCollection(client);
+
+        await client.delete({
+            collectionName: ZILLIZ_COLLECTION,
+            dbName,
+            filter: buildFilter(String(userId), [filename]),
+        });
+    } catch (error) {
+        const status = parseStatus(error);
+        const message = toMessage(error);
+        throw new Error(`Zilliz delete failed${status ? ` (status ${status})` : ""}: ${message}`);
+    }
+}
+
 export async function searchChunks(args: {
     embedding: number[];
     userId: string;

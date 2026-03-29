@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import { siliconflow } from "./ai-clients";
 export function getReasoningModel() {
     if (process.env.SILICONFLOW_API_KEY) {
-        return siliconflow("deepseek-ai/DeepSeek-V3");
+        return siliconflow.chat("deepseek-ai/DeepSeek-V3");
     }
 
     if (process.env.GROQ_API_KEY) {
