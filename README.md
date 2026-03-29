@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+## i18n AST 迁移工具
+
+本项目包含一个基于 AST 的 i18n 迁移 CLI，使用 Babel AST + recast 实现尽可能无损的源码更新。
+
+### 命令
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 仅扫描（dry-run）
+npm run i18n:migrate:scan
+
+# 执行替换并写入消息文件
+npm run i18n:migrate:write
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 当前能力
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 三层过滤：
+	- AST 上下文过滤
+	- 中文内容正则过滤
+	- 注释标记过滤（`i18n-ignore`、`@i18n-ignore-file`）
+- 支持 TS/TSX 解析，并使用 recast 打印代码（尽可能保持原有风格）
+- 自动生成翻译 key，并写入：
+	- `messages/zh.json`
+	- `messages/en.json`（默认回填相同文案）
+- 在支持的上下文中支持模板字符串变量提取
 
-## Learn More
+### 当前支持的转换上下文
 
-To learn more about Next.js, take a look at the following resources:
+- JSX 文本节点
+- JSX 字符串属性：`title`、`placeholder`、`aria-label`、`label`、`alt`、`description`、`helperText`
+- `alert/confirm/prompt` 的调用参数
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 说明
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- CLI 仅会改写检测到翻译函数变量的文件（例如 `const t = useTranslations()`）。
+- 在 dry-run 模式下，如果发现候选项，进程会以退出码 `2` 结束，便于 CI 门禁校验。

@@ -55,7 +55,7 @@ export function ChatShell({ initialSessions }: Props) {
     const [loadingSession, setLoadingSession] = useState(false);
     const [uploadError, setUploadError] = useState("");
     const [uploadWarning, setUploadWarning] = useState("");
-    const { messages, setMessages, sendMessage, isStreaming } = useChatStream(activeSessionId);
+    const { messages, setMessages, sendMessage, isStreaming, interruptedGeneration, resumeGeneration } = useChatStream(activeSessionId);
 
     const virtualizer = useVirtualizer({
         count: messages.length,
@@ -640,6 +640,21 @@ export function ChatShell({ initialSessions }: Props) {
                     </div>
 
                     <form className="border-t p-4" onSubmit={onSubmit}>
+                        {interruptedGeneration && (
+                            <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                <span className="flex-1">连接中断，已恢复已生成内容。</span>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100"
+                                    disabled={isStreaming}
+                                    onClick={() => void resumeGeneration(interruptedGeneration)}
+                                >
+                                    继续生成
+                                </Button>
+                            </div>
+                        )}
                         <div className="flex gap-3">
                             <Textarea
                                 className="min-h-[80px]"

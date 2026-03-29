@@ -19,6 +19,7 @@ model User {
   sessions    ChatSession[]
   documents   Document[]
   activity    ActivityLog[]
+  generations Generation[]
 
   @@map("user")
 }
@@ -37,13 +38,14 @@ model ActivityLog {
 }
 
 model ChatSession {
-  id        Int               @id @default(autoincrement())
-  userId    Int               @map("user_id")
-  title     String            @default("New Conversation") @db.VarChar(200)
-  createdAt DateTime          @default(now()) @map("created_at")
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  ChatMessage[]
-  documents SessionDocument[]
+  id          Int               @id @default(autoincrement())
+  userId      Int               @map("user_id")
+  title       String            @default("New Conversation") @db.VarChar(200)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    ChatMessage[]
+  documents   SessionDocument[]
+  generations Generation[]
 
   @@index([userId])
   @@map("chat_session")
@@ -86,4 +88,21 @@ model SessionDocument {
 
   @@id([sessionId, documentId])
   @@map("session_documents")
+}
+
+model Generation {
+  id             String      @id @default(cuid())
+  sessionId      Int         @map("session_id")
+  userId         Int         @map("user_id")
+  question       String
+  partialContent String      @default("") @map("partial_content")
+  status         String      @default("pending") @db.VarChar(20)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  session        ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+  @@map("generation")
 }

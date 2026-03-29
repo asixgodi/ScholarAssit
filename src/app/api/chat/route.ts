@@ -6,6 +6,9 @@ import { runRagPipeline } from "@/lib/rag/pipeline";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+// 每累积 300 字符刷一次 partialContent 到库
+const FLUSH_EVERY = 300;
+
 export async function POST(req: Request) {
     try {
         const user = await requireUser();
@@ -36,17 +39,28 @@ export async function POST(req: Request) {
             },
         });
 
-        // 获取该会话的历史消息（排除刚插入的当前消息）
         const historyMessages = await prisma.chatMessage.findMany({
             where: { sessionId: session.id },
             orderBy: { createdAt: "asc" },
             select: { role: true, content: true },
         });
-        // 去掉最后一条（刚插入的当前用户消息）
         const chatHistory = historyMessages.slice(0, -1).map((m) => ({
             role: m.role as "user" | "ai",
             content: m.content,
         }));
+
+        // 提前解构，避免闭包内 TypeScript 丢失 null narrowing
+        const dbSessionId = session.id;
+
+        // 创建 generation 记录，状态为 streaming
+        const generation = await prisma.generation.create({
+            data: {
+                sessionId: session.id,
+                userId: user.id,
+                question: String(message),
+                status: "streaming",
+            },
+        });
 
         let streamResult;
         try {
@@ -58,9 +72,15 @@ export async function POST(req: Request) {
             });
         } catch (pipelineError) {
             const errMsg = pipelineError instanceof Error ? pipelineError.message : "AI 处理失败，请稍后重试";
-            await prisma.chatMessage.create({
-                data: { sessionId: session.id, role: "ai", content: `[错误] ${errMsg}` },
-            });
+            await Promise.all([
+                prisma.chatMessage.create({
+                    data: { sessionId: session.id, role: "ai", content: `[错误] ${errMsg}` },
+                }),
+                prisma.generation.update({
+                    where: { id: generation.id },
+                    data: { status: "failed" },
+                }),
+            ]);
             console.error("[api/chat] pipeline failed:", pipelineError);
             return NextResponse.json({ error: errMsg }, { status: 500 });
         }
@@ -69,6 +89,41 @@ export async function POST(req: Request) {
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         let fullText = "";
+        let sinceLastFlush = 0;
+
+        // 标记是否已在处理断线（避免 abort + 流结束 双写）
+        let settled = false;
+
+        async function markInterrupted() {
+            if (settled) return;
+            settled = true;
+            await prisma.generation.update({
+                where: { id: generation.id },
+                data: { status: "interrupted", partialContent: fullText },
+            });
+        }
+
+        async function markDone() {
+            if (settled) return;
+            settled = true;
+            await Promise.all([
+                prisma.chatMessage.create({
+                    data: { sessionId: dbSessionId, role: "ai", content: fullText },
+                }),
+                prisma.generation.update({
+                    where: { id: generation.id },
+                    data: { status: "done", partialContent: fullText },
+                }),
+                prisma.activityLog.create({
+                    data: { userId: user.id, action: "chat" },
+                }),
+            ]);
+        }
+
+        // 客户端主动断开时标记 interrupted
+        req.signal.addEventListener("abort", () => {
+            void markInterrupted();
+        });
 
         const customStream = new ReadableStream({
             async start(controller) {
@@ -81,36 +136,31 @@ export async function POST(req: Request) {
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
+
                         const chunk = decoder.decode(value, { stream: true });
                         fullText += chunk;
+                        sinceLastFlush += chunk.length;
                         controller.enqueue(value);
+
+                        // 定期把已生成内容落库（fire-and-forget）
+                        if (sinceLastFlush >= FLUSH_EVERY) {
+                            sinceLastFlush = 0;
+                            const snapshot = fullText;
+                            prisma.generation
+                                .update({
+                                    where: { id: generation.id },
+                                    data: { partialContent: snapshot },
+                                })
+                                .catch(console.error);
+                        }
                     }
-                } catch (streamError) {
-                    const errMsg = streamError instanceof Error ? streamError.message : "流式输出中断";
-                    const saved = fullText || `[错误] ${errMsg}`;
-                    await prisma.chatMessage.create({
-                        data: { sessionId: session.id, role: "ai", content: saved },
-                    });
-                    console.error("[api/chat] stream failed:", streamError);
+                } catch {
+                    // controller.enqueue 抛出意味着客户端已断线，abort 事件会处理落库
                     controller.close();
                     return;
                 }
 
-                await prisma.chatMessage.create({
-                    data: {
-                        sessionId: session.id,
-                        role: "ai",
-                        content: fullText,
-                    },
-                });
-
-                await prisma.activityLog.create({
-                    data: {
-                        userId: user.id,
-                        action: "chat",
-                    },
-                });
-
+                await markDone();
                 controller.close();
             },
         });
@@ -119,6 +169,9 @@ export async function POST(req: Request) {
             headers: {
                 "Content-Type": "text/plain; charset=utf-8",
                 "Cache-Control": "no-cache",
+                // 把 generationId 透传给前端，供断线恢复使用
+                "X-Generation-Id": generation.id,
+                "Access-Control-Expose-Headers": "X-Generation-Id",
             },
         });
     } catch (error) {
